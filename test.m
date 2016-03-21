@@ -1,82 +1,104 @@
-% B-mode ¼v¹³¹êÅçªº½d¨Òµ{¦¡
-% ­Y¤£²M·¡©Ò¨Ï¥Î¤§MATLAB«ü¥O¡A½Ğ¬dMATLAB help
-% Edited by M.-L. Li 05/14/2002
 clear all
-DR = 60;	% dynamic range (°ÊºA½d³ò) of the image		
-                % ¦]SonositeµLªkÅã¥Ü¨Ï¥Îªº°ÊºA½d³ò(³q±`·|Åã¥Ü¦b¨ä¥L¨t²Îªº­ì©l¼v¹³¤W),¥iª½±µ¨Ï¥ÎDR=60
-			
-% ¦bMATLAB¤¤,imread¶i¨Óªº¼v¹³¸ê®Æ data type ¬° "uint8"
-OriIm = imread('screenshot/exp1_1_2lighter_025_pen.bmp');
-GrayIm = rgb2gray(OriIm);	% rgb to gray scale, data type : uint8
+DR=60;
+OriIm = imread('../screenshot/exp1_1_2lighter_025_pen.bmp');
 
-% ¦bMATLAB¤¤¡A+,-,*,/µ¥¼Æ­È¹Bºâ©Î¨ç¦¡¥u¯à¨Ï¥Î©ódata type¬°doubleªº¸ê®Æ¤W¡A
-% ¦]¦¹¡A¦b¦¹¥ı±Nuint8ªºdata typeÂà¦¨"double"
-GrayIm = double(OriIm);	
+%ColorIm=double(OriIm);
+ColorIm=OriIm;
+GrayIm= rgb2gray(OriIm);
 
-%    figure,imagesc(GrayIm), colormap(gray)
+choppedColorIm = ColorIm([1: 375], [250: 400], [1: 3]);
+choppedGrayIm=GrayIm([1: 375], [250: 400]);
 
-% ±N­ì©l¼v¹³¤W¡A¯u¥¿Äİ©ó¥éÅé¼v¹³ªº³¡¥÷¨ú¥X¡A¤£¦Pªº¼v¹³¨úªº°Ï°ì¤£¦P¡A
-% ½Ğ¦Û¤v§ä¥X¦Û¤vÂ^¨ú¼v¹³¯u¥¿Äİ©ó¥éÅé¼v¹³ªº³¡¥÷
-%GrayIm = GrayIm(?);
-GrayIm = GrayIm([1: 375], [250: 400], [1: 3]);
-croppedIm = OriIm([1: 375], [250: 400], [1: 3]);
 
 figure
 image(OriIm)
-title('opriginal image')
+title('original image')
 
 figure
-image(croppedIm)
-title('cropped image')
+image(choppedColorIm)
+title('chopped image')
 
 figure
-image(GrayIm)
+image(choppedGrayIm)
 title('gray level image')
 
-% gray to dB ¥Ñ0-255ªº¦Ç¶¥Âà¦¨ dB
-
-a = min(min(GrayIm));
-
-[xdim, ydim, zdim] = size(GrayIm);
-
-dBIm = zeros(xdim, ydim, zdim);
-minValue = min(min(GrayIm));
-
-for i = 1: xdim
-  for j = 1: ydim
-    dBIm(i, j, 1) = GrayIm(i, j, 1) - minValue(:, :, 1); % set min value to 0
-    dBIm(i, j, 2) = GrayIm(i, j, 2) - minValue(:, :, 2);
-    dBIm(i, j, 3) = GrayIm(i, j, 3) - minValue(:, :, 3);
-  end
-end
-
-%dBIm = dBIm/max(max(dBIm));			% normalization, 0 - 1
-maxValue = max(max(dBIm));
-
-for i = 1: xdim
-  for j = 1: ydim
-    dBIm(i, j, 1) = dBIm(i, j, 1)/ maxValue(:, :, 1);
-    dBIm(i, j, 2) = dBIm(i, j, 2)/ maxValue(:, :, 2);
-    dBIm(i, j, 3) = dBIm(i, j, 3)/ maxValue(:, :, 3);
-  end
-end
-
-%dBIm = dBIm*DR;							% to dB, 0 - DR
-
-for i = 1: xdim
-  for j = 1: ydim
-    dBIm(i, j, 1) = dBIm(i, j, 1)* DR;
-    dBIm(i, j, 2) = dBIm(i, j, 2)* DR;
-    dBIm(i, j, 3) = dBIm(i, j, 3)* DR;
-  end
-end
-
+choppedGrayImDouble=double(choppedGrayIm);
+min_of_GrayIm=min(min(choppedGrayImDouble));
+Nor_GrayIm= choppedGrayImDouble-min_of_GrayIm;
+ratioGrayImDouble=Nor_GrayIm/max(max(choppedGrayImDouble));
+dbImDouble=ratioGrayImDouble*DR;
 
 % show B-mode image
-
 figure
-image(dBIm)
+image(dbImDouble)
 colormap(gray(DR))
 axis image
 colorbar
 title('B-mode image, dynamic range = 50dB')
+
+%%%PSF
+
+LateraldbIm= max(dbImDouble) - max(max(dbImDouble));
+figure
+plot(LateraldbIm)
+title('Lateral projection')
+
+dbImDoubleTranspose=transpose(dbImDouble);
+
+VerticaldbIm= max(dbImDoubleTranspose) - max(max(dbImDoubleTranspose));  
+figure
+plot(VerticaldbIm)
+title('Vertical projection')
+
+
+idx = find(VerticaldbIm >= -6 );
+i = 1;
+Width6dB = 1;
+while (Width6dB == 1)
+    Width6dB = idx(i + 1)-idx(i);
+    i = i + 1;
+end
+disp('vertical Width6dB:');
+disp(Width6dB);
+
+idx = find(LateraldbIm >= -6 );
+i = 1;
+Width6dB = 1;
+while (Width6dB == 1)
+    Width6dB = idx(i + 1)-idx(i);
+    i = i + 1;
+end
+disp('lateral Width6dB:');
+disp(Width6dB);
+
+%%%%%%%Speckle
+
+[xdim, ydim] = size(dbImDouble);
+
+EBase = zeros(xdim, ydim);
+IBase= zeros(xdim, ydim);
+for i = 1: xdim
+  for j = 1: ydim
+    EBase(i, j) = 10^(dbImDouble(i,j)/20);
+    IBase(i,j)= 10^(dbImDouble(i,j)/10);
+  end
+end
+
+%2D-1D
+histogramE=max(EBase);
+histogramI=max(IBase);
+
+figure
+% è«‹å…ˆæŠŠ LinearIm_I ä»¥åŠ LinearIm_E è®Šæˆcolumn vector, å†ä½¿ç”¨histæŒ‡ä»¤ç•«å‡ºæ©Ÿç‡åˆ†å¸ƒåœ–
+hist(histogramE,500);	% åƒexpenential distributionå—?
+title('Speckle Intensity Distribution');xlabel('I');ylabel('P_I')
+
+figure
+hist(histogramI,1000);	% åƒReyleigh distributionå—?
+title('Speckle Amplitude Distribution');xlabel('E');ylabel('P_E')
+
+
+
+
+
+
