@@ -52,24 +52,34 @@ title('Vertical projection')
 
 
 idx = find(VerticaldbIm >= -6 );
-i = 1;
-Width6dB = 1;
-while (Width6dB == 1)
-    Width6dB = idx(i + 1)-idx(i);
-    i = i + 1;
-end
+leftBound = idx(1);
 disp('vertical Width6dB:');
-disp(Width6dB);
-
-idx = find(LateraldbIm >= -6 );
-i = 1;
-Width6dB = 1;
-while (Width6dB == 1)
-    Width6dB = idx(i + 1)-idx(i);
-    i = i + 1;
+for i = 1:length(idx)
+    if(i ~= length(idx))
+        temp = idx(i + 1) - idx(i);
+    end
+    if(temp ~= 1)
+        Width6dB = idx(i) - leftBound;
+        disp(Width6dB);
+        leftBound = idx(i + 1);
+    end
 end
+
+idx2 = find(LateraldbIm >= -6 );
+index = 1;
+Width6dB = 1;
+leftBound = idx2(1);
 disp('lateral Width6dB:');
-disp(Width6dB);
+for i = 1:length(idx2)
+    if(i ~= length(idx2))
+        temp = idx2(i + 1) - idx2(i);
+    end
+    if(temp ~= 1)
+        Width6dB = idx2(i) - leftBound;
+        disp(Width6dB);
+        leftBound = idx2(i + 1);
+    end
+end
 
 %%%%%%%Speckle
 
@@ -96,7 +106,6 @@ title('Speckle Intensity Distribution');xlabel('I');ylabel('P_I')
 figure
 hist(histogramI,1000);	% 像Reyleigh distribution嗎?
 title('Speckle Amplitude Distribution');xlabel('E');ylabel('P_E')
-
 
 
 
